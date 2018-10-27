@@ -15,6 +15,8 @@ defaultRunTime = 10000
 streamName = "camera"
 threadName = "t"
 statFileId = "overlay-stats"
+# pixelFormat = 'bgr0' # only two types are supported by AVFoundation - 0rgb and bgr0
+pixelFormat = '0rgb'
 
 samplePolicyAny = \
 u'validator\n\
@@ -95,8 +97,8 @@ def checkNfdIsRunning():
 def startFfplay(previewPipe, w, h, overlayFile=''):
     proc = popen([ffplayCmd, '-f', 'rawvideo', 
                     # '-vf', 'drawtext=text=\'%{localtime} '+str+'\': x=10: y=10: fontcolor=white: fontsize=20: box=1: boxcolor=0x00000000@1',
-                    '-vf', 'drawtext=textfile='+overlayFile+':reload=1: x=10: y=10: fontcolor=white: fontfile=/System/Library/Fonts/Courier.dfont: fontsize=20: box=1: boxcolor=0x00000000@0.3',
-                    '-pixel_format', '0rgb',
+                    '-vf', 'vflip, drawtext=textfile='+overlayFile+':reload=1: x=10: y=10: fontcolor=white: fontfile=/System/Library/Fonts/Courier.dfont: fontsize=20: box=1: boxcolor=0x00000000@0.3:',
+                    '-pixel_format', pixelFormat,
                     '-video_size', '%dx%d'%(w,h),
                     '-i', previewPipe],
                   stdout=PIPE, 
@@ -107,17 +109,19 @@ def startFfplay(previewPipe, w, h, overlayFile=''):
 def startFfmpeg(cameraPipe, previewPipe, w,h):
     proc = popen([ffmpegCmd,'-y',
                      '-f', 'avfoundation',
-                    '-pixel_format', '0rgb',
+                    '-pixel_format', pixelFormat,
                     '-framerate', '25',
                     '-video_size', '%dx%d'%(w,h),
                     '-i', '0',
                     '-map', '0:v',
                     '-vsync', '2',
+                    '-vf', 'vflip',
                     # '-c', 'copy',
                     '-f', 'rawvideo',
                     cameraPipe,
                     '-map', '0:v',
                     '-vsync', '2',
+                    '-vf', 'vflip',
                     # '-c', 'copy',
                     '-f', 'rawvideo',
                     previewPipe],
